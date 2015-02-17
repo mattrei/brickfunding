@@ -63,10 +63,13 @@ Template.controls.helpers({
   },
   colorPickerTabIs: function (tabName) {
     return (Session.get("colorPickerTab") || "block") === tabName;
+  },
+  boxinfo: function() {
+    return Session.get("boxinfo");
+    //return Utils.hoveredBox().target.nodeName;
   }
 });
 
-// events on the dialog with lots of buttons
 Template.controls.events({
   "click .clear-boxes": function () {
     Meteor.call("clearBoxes", Session.get("sceneId"));
@@ -230,7 +233,21 @@ Template.scene.events({
       }
     }
   },
+  "mouseover shape": function (event) {
+
+    var el = _.pick(event, ["target"]);
+    if (el && el.target.nodeName != "PLANE") {
+      console.log(el.target.nodeName);
+      Session.set("boxinfo", el.target.nodeName);
+    } else {
+      Session.set("boxinfo", 'no');
+    }
+  },
+  "mouseclick": function (event) {
+    console.log(event);
+  },
   "viewpointChanged viewpoint": function (event) {
+    //console.log(_.pick(event, ["orientation", "position", "centerOfRotation"]));
     Session.set("currentViewpoint", _.pick(event,
       ["orientation", "position", "centerOfRotation"]));
   }

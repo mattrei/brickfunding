@@ -7,26 +7,29 @@
 	<!-- turn navigation on and off reactively -->
   <navigationinfo type="turntable"
   headlight="false"></navigationinfo>
-	
+
 	<!-- lights -->
 	<pointLight location="0 40 0" intensity="0.3"></pointLight>
 	<pointLight location="-30 10 -20" intensity="0.7"></pointLight>
 	<directionalLight direction="-1 -1 -0.7" color="#ffe"
 		intensity="0.8" shadowIntensity="0.3"
 		shadowFilterSize="5"></directionalLight>
-	
+
 	<!-- ground -->
 	<transform rotation="-1.5707963267948966 0 0 1.5707963267948966">
   	<shape>
   		<appearance>
   			<!-- XXX could be improved to a grass texture -->
-	  		<material diffuseColor="{{groundColor}}"></material>
+				<!--<ImageTexture  url="http://upload.wikimedia.org/wikipedia/commons/thumb/0/09/Peach_Rinkysplash.jpg/800px-Peach_Rinkysplash.jpg"></ImageTexture>-->
+				<ImageTexture  url="/textures/grass1.jpg"></ImageTexture>
+	  		<!--<material diffuseColor="{{groundColor}}"></material>-->
 	  	</appearance>
-	  	<plane size="20 20"></plane>
+	  	<plane size="30 30"></plane>
 	  </shape>
 	</transform>
 
-	<background skyColor="{{x3dBackgroundColor}}"></background>
+	<!--<background skyColor="{{x3dBackgroundColor}}"></background>-->
+	<background skyColor="0.4 0.4 0.5" backUrl="/skyBox/BK.png" bottomUrl="/skyBox/DN.png" frontUrl="/skyBox/FR.png" leftUrl="skyBox/LF.png" rightUrl="skyBox/RT.png" topUrl="skyBox/UP.png"></background>
 
 	<!-- boxes -->
 	{{#each boxes}}
@@ -35,6 +38,7 @@
 	    <shape id="{{_id}}">
 	      <appearance>
 	      	<!-- could be improved to have texture and not just color -->
+					<ImageTexture  url="/textures/brick1.jpg"></ImageTexture>
 	        <material diffuseColor="{{color}}" ambientIntensity="0.1"
 	        	shininess="0"></material>
 	      </appearance>
@@ -42,6 +46,11 @@
 	    </shape>
 	  </transform>
   {{/each}}
+
+	<transform translation="{{x}} {{y}} {{z}}" scale="0.5 0.5 0.5">
+		<inline url="/Deer.x3d"> </inline>
+	</transform>
+
 </template>
 
 <template name="controls">
@@ -112,9 +121,11 @@
 			<button class="freeze btn btn-sm btn-default">Publish</button>
 			<button class="clone btn btn-sm btn-default">Make a Copy</button>
 		{{/if}}
-
-		<div class="github-link">
-			<a href="http://git.io/meteor3d">See the code on GitHub</a>
-		</div>
+		<h2>Info</h2>
+		<p>{{boxinfo}}</p>
 	</div>
+</template>
+
+<template name="boxinfo">
+
 </template>
