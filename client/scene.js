@@ -226,10 +226,12 @@ Template.scene.events({
         };
 
         Meteor.call("addBoxToScene", Session.get("sceneId"), box);
-      } else if (event.button === 4 || event.button === 2) {
+      } else if (event.button === 2) {
         // right click to remove box
         Meteor.call("removeBoxFromScene",
           Session.get("sceneId"), event.currentTarget.id);
+      } else if (event.button === 4) {
+        Meteor.call("donateBox", event.currentTarget.id);
       }
     }
   },
@@ -237,14 +239,11 @@ Template.scene.events({
 
     var el = _.pick(event, ["target"]);
     if (el && el.target.nodeName != "PLANE") {
-      console.log(el.target.nodeName);
-      Session.set("boxinfo", el.target.nodeName);
+      console.log(event);
+      Session.set("boxinfo", event.currentTarget.id);
     } else {
       Session.set("boxinfo", 'no');
     }
-  },
-  "mouseclick": function (event) {
-    console.log(event);
   },
   "viewpointChanged viewpoint": function (event) {
     //console.log(_.pick(event, ["orientation", "position", "centerOfRotation"]));

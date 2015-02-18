@@ -49,9 +49,32 @@ Meteor.methods({
     if (scene.frozen) {
       throw new Meteor.Error(403, "Can't add blocks to frozen scene.");
     }
- 
+
     box.sceneId = sceneId;
     Boxes.insert(box);
+  },
+  donateBox: function (boxId) {
+    check(boxId, String);
+
+    var box = Boxes.findOne(boxId);
+    if (!box) {
+      throw new Meteor.Error(403, "Box doesn't exist.");
+    }
+
+    if (box.frozen) {
+      throw new Meteor.Error(403, "Can't donate blocks to frozen scene.");
+    }
+
+
+    Boxes.update(
+      { _id: boxId },
+      { $set:
+        {
+          donated: true,
+          donatedAt: new Date()
+        }
+      }
+    );
   },
   removeBoxFromScene: function (sceneId, boxId) {
     check(sceneId, String);
