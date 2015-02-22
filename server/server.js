@@ -37,9 +37,9 @@ Meteor.methods({
     check(box, {
       color: "#fff",
       texture: String,
-      scaleX: Number,
-      scaleY: Number,
-      scaleZ: Number,
+      sizeX: Number,
+      sizeY: Number,
+      sizeZ: Number,
       x: Number,
       y: Number,
       z: Number
@@ -117,8 +117,9 @@ Meteor.methods({
   newScene: function () {
     var id = Scenes.insert({
       createdAt: new Date(),
-      backgroundColor: "#fff",
-      groundColor: "#4a9"
+      size: [30, 30]
+      //backgroundColor: "#fff",
+      //groundColor: "#4a9"
     });
 
     return id;

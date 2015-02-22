@@ -33,7 +33,7 @@
 	{{#each boxes}}
 		<!-- scale 0.5 because default size of box is 2 units on a side -->
 
-			<transform translation="{{x}} {{y}} {{z}}" scale="{{scaleX}} {{scaleY}} {{scaleZ}}" rotation="1 0 0 0">
+			<transform translation="{{x}} {{y}} {{z}}" scale="1 1 1" rotation="0 1 0 0">
 	    <shape id="{{_id}}">
 	      <appearance>
 	      	<!-- could be improved to have texture and not just color -->
@@ -46,8 +46,7 @@
         	        	shininess="0" transparency="0.1"></material>
           {{/if}}
 	      </appearance>
-	      <!--<box size="{{scaleX}} {{scaleY}} {{scaleZ}}"></box>-->
-				<box></box>
+	      <box size="{{sizeX}} {{sizeY}} {{sizeZ}}"></box>
 	    </shape>
 	  </transform>
   {{/each}}
@@ -106,32 +105,44 @@
 			Clear all blocks</button>
 
 		<div class="texture-picker">
-			<h2>Texture picker</h2>
+			<h2>Scene</h2>
 			<ul class="nav nav-tabs">
-				<li class="{{#if texturePickerTabIs 'ground'}}active{{/if}}">
+				<li class="{{#if scenePickerTabIs 'ground'}}active{{/if}}">
 					<a href="#" data-tab-name="ground">Ground</a></li>
-				<li class="{{#if texturePickerTabIs 'background'}}active{{/if}}">
+				<li class="{{#if scenePickerTabIs 'background'}}active{{/if}}">
 					<a href="#" data-tab-name="background">Background</a></li>
+				<li class="{{#if scenePickerTabIs 'size'}}active{{/if}}">
+						<a href="#" data-tab-name="size">Size</a></li>
 			</ul>
 			<div class="texture-picker-content">
-				{{#if texturePickerTabIs 'ground'}}
+				{{#if scenePickerTabIs 'ground'}}
 				{{#each groundTextures}}
 					<img class="swatch {{#if activeTexture}}active{{/if}}" src="/textures/{{this}}">
 				{{/each}}
 				{{/if}}
-				{{#if texturePickerTabIs 'background'}}
+				{{#if scenePickerTabIs 'background'}}
 				{{#each backgroundTextures}}
 					<img src="/textures/skybox/{{this}}">
 				{{/each}}
+				{{/if}}
+				{{#if scenePickerTabIs 'size'}}
+				<label class="btn">
+					<input type="range" id="sliderWidth" min="15" max="80" step="5" value="30" /> Width
+				</label>
+				<label class="btn">
+					<input type="range" id="sliderHeight" min="15" max="80" step="5" value="30" /> Height
+				</label>
 				{{/if}}
 			</div>
 		</div>
 
 		<div class="block-picker">
-			<h2>Block settings</h2>
+			<h2>Block</h2>
 			<ul class="nav nav-tabs">
 				<li class="{{#if blockTabIs 'texture'}}active{{/if}}">
 					<a href="#" data-tab-name="texture">Texture</a></li>
+				<li class="{{#if blockTabIs 'size'}}active{{/if}}">
+					<a href="#" data-tab-name="size">Size</a></li>
 				<li class="{{#if blockTabIs 'orientation'}}active{{/if}}">
 					<a href="#" data-tab-name="orientation">Orientation</a></li>
 			</ul>
@@ -148,6 +159,17 @@
 				 <button class="orientate-block btn btn-primary">Horizontal</button>
 
 
+				{{/if}}
+				{{#if blockTabIs 'size'}}
+				<label class="btn">
+					<input type="number" id="blockLength" min="1" max="5" step="1" value="1" /> Length
+				</label>
+				<label class="btn">
+					<input type="number" id="blockHeigth" min="1" max="5" step="1" value="1" /> Heigth
+				</label>
+				<label class="btn">
+					<input type="number" id="blockWidth" min="1" max="5" step="1" value="1" /> Width
+				</label>
 				{{/if}}
 			</div>
 		</div>

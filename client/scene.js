@@ -17,7 +17,7 @@ var colors = _.values({
   purple:  "#B10DC9",
   maroon:  "#85144B",
 
-  // Gray Scale
+  // Gray size
   white:  "#fff",
   silver: "#ddd",
   gray:   "#aaa",
@@ -47,7 +47,10 @@ Meteor.log = function() {
   Meteor.call('log', arguments);
 };
 
-Session.setDefault("color", "#7FDBFF");
+Session.setDefault("groundWidth", 30);
+Session.setDefault("groundHeight", 30);
+Session.setDefault("groundTexture", groundTextures[0]);
+Session.setDefault("backgroundTexture", backgroundTextures[0]);
 Session.setDefault("blockTexture", blockTextures[0]);
 Session.setDefault("blockOrientation", false);
 
@@ -65,11 +68,11 @@ Template.controls.helpers({
   blockTextures: blockTextures,
   groundTextures: groundTextures,
   backgroundTextures: backgroundTextures,
-  // active color helper for color picker
+
   activeTexture: function () {
-    if (Session.equals("texturePickerTab", "ground")) {
+    if (Session.equals("scenePickerTab", "ground")) {
       return this.valueOf() === Utils.currentScene().groundTexture;
-    } else if (Session.equals("texturePickerTab", "background")) {
+    } else if (Session.equals("scenePickerTab", "background")) {
       return this.valueOf() === Utils.currentScene().backgroundTexture;
     }
   },
@@ -80,8 +83,8 @@ Template.controls.helpers({
     // check for Facebook API
     return !! FB;
   },
-  texturePickerTabIs: function (tabName) {
-    return (Session.get("texturePickerTab") || "ground") === tabName;
+  scenePickerTabIs: function (tabName) {
+    return (Session.get("scenePickerTab") || "ground") === tabName;
   },
   blockTabIs: function (tabName) {
     return (Session.get("blockTab") || "texture") === tabName;
@@ -98,9 +101,9 @@ Template.controls.events({
   },
   "click .texture-picker .swatch": function () {
     var sceneId = Session.get("sceneId");
-    if (Session.equals("texturePickerTab", "ground")) {
+    if (Session.equals("scenePickerTab", "ground")) {
       Meteor.call("setSceneGroundTexture", sceneId, this.valueOf());
-    } else if (Session.equals("texturePickerTab", "background")) {
+    } else if (Session.equals("scenePickerTab", "background")) {
       Meteor.call("setSceneBackgroundTexture", sceneId, this.valueOf());
     }
   },
@@ -144,7 +147,7 @@ Template.controls.events({
   "click .texture-picker .nav-tabs a": function (event) {
     event.preventDefault();
     var tabName = event.target.getAttribute("data-tab-name");
-    Session.set("texturePickerTab", tabName);
+    Session.set("scenePickerTab", tabName);
   },
   "click .block-picker .nav-tabs a": function (event) {
     event.preventDefault();
@@ -153,6 +156,14 @@ Template.controls.events({
   },
   "click .facebook": function () {
     shareOnFacebook(Session.get("sceneId"));
+  },
+  "change #sliderWidth": function () {
+    console.log(this.valueOf());
+    Session.set("sceneWidth", this.valueOf());
+  },
+  "change #sliderHeight": function () {
+    console.log(this);
+    Session.set("sceneHeight", this.valueOf());
   }
 });
 
@@ -162,6 +173,15 @@ Template.scene.helpers({
   },
   groundTexture: function () {
     return Utils.currentScene().groundTexture || groundTextures[0];
+  },
+  groundSize: function () {
+    var scene = Utils.currentScene();
+
+    if (scene && scene.size) {
+      return scene.size.join(" ");
+    } else {
+      return "30 30";
+    }
   },
   /*
   x3dGroundColor: function () {
@@ -258,15 +278,17 @@ Template.scene.events({
         console.log(event);
 
 
-        var scaleX, scaleY, scaleZ;
+        var sizeX, sizeY, sizeZ;
         if (Session.equals("blockOrientation", true)) {
-          scaleX = 0.2;
-          scaleZ = 0.5;
+          sizeX = 2;
+          sizeZ = 1;
+          sizeY = 1;
         } else {
-          scaleX = 0.5;
-          scaleZ = 0.2;
+          sizeX = 1;
+          sizeZ = 2;
+          sizeY = 1;
         }
-        scaleY = 0.5;
+
 
         // calculate new box position based on location of click event
         // in 3d space and the normal of the surface that was clicked
@@ -276,18 +298,18 @@ Template.scene.events({
           texture: Session.get("blockTexture"),
 
 
-          scaleX: scaleX,
-          scaleY: scaleY,
-          scaleZ: scaleZ,
+          sizeX: sizeX,
+          sizeY: sizeY,
+          sizeZ: sizeZ,
+
+          x: Math.floor(event.worldX + event.normalX / 2) + 0.5 * sizeX,
+          y: Math.floor(event.worldY + event.normalY / 2) + 0.5 * sizeY,
+          z: Math.floor(event.worldZ + event.normalZ / 2) + 0.5 * sizeZ,
 /*
-          x: Math.floor(event.normalX),
-          y: Math.floor(event.normalY),
-          z: Math.floor(event.normalZ),
-*/
           x: Math.floor(event.worldX + event.normalX / 2) + 0.5,
           y: Math.floor(event.worldY + event.normalY / 2) + 0.5,
           z: Math.floor(event.worldZ + event.normalZ / 2) + 0.5
-
+*/
         };
 
         Meteor.call("addBoxToScene", Session.get("sceneId"), box);
