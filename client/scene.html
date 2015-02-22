@@ -1,4 +1,5 @@
 <template name="scene">
+	<Environment id='myEnv' SSAO='true' SSAOamount='0.3' SSAOblurDepthTreshold='1.0' SSAOradius='0.7' SSAOrandomTextureSize='4'></Environment>
 	<!-- camera/scene settings -->
 	<viewpoint position="{{x3dPosition}}"
 		orientation="{{x3dOrientation}}"
@@ -19,10 +20,7 @@
 	<transform rotation="-1.5707963267948966 0 0 1.5707963267948966">
   	<shape>
   		<appearance>
-  			<!-- XXX could be improved to a grass texture -->
-				<!--<ImageTexture  url="http://upload.wikimedia.org/wikipedia/commons/thumb/0/09/Peach_Rinkysplash.jpg/800px-Peach_Rinkysplash.jpg"></ImageTexture>-->
-				<ImageTexture  url="/textures/grass1.jpg"></ImageTexture>
-	  		<!--<material diffuseColor="{{groundColor}}"></material>-->
+				<ImageTexture  url="/textures/{{groundTexture}}"></ImageTexture>
 	  	</appearance>
 	  	<plane size="30 30"></plane>
 	  </shape>
@@ -34,20 +32,22 @@
 	<!-- boxes -->
 	{{#each boxes}}
 		<!-- scale 0.5 because default size of box is 2 units on a side -->
-		<transform translation="{{x}} {{y}} {{z}}" scale="0.5 0.5 0.5">
+
+			<transform translation="{{x}} {{y}} {{z}}" scale="{{scaleX}} {{scaleY}} {{scaleZ}}" rotation="1 0 0 0">
 	    <shape id="{{_id}}">
 	      <appearance>
 	      	<!-- could be improved to have texture and not just color -->
-					<ImageTexture  url="/textures/brick1.jpg"></ImageTexture>
+					<ImageTexture  url="/textures/{{texture}}"></ImageTexture>
 					{{#if donated}}
 					<material diffuseColor="{{color}}" ambientIntensity="1"
 						shininess="0"></material>
-                    {{else}}
-        	        <material diffuseColor="{{color}}" ambientIntensity="0.1"
-        	        	shininess="0" transparency="0.5"></material>
-                    {{/if}}
+          {{else}}
+        	   <material diffuseColor="{{color}}" ambientIntensity="0.1"
+        	        	shininess="0" transparency="0.1"></material>
+          {{/if}}
 	      </appearance>
-	      <box></box>
+	      <!--<box size="{{scaleX}} {{scaleY}} {{scaleZ}}"></box>-->
+				<box></box>
 	    </shape>
 	  </transform>
   {{/each}}
@@ -105,22 +105,50 @@
 		<button class="clear-boxes btn btn-sm btn-default">
 			Clear all blocks</button>
 
-		<div class="color-picker">
-			<h2>Color picker</h2>
+		<div class="texture-picker">
+			<h2>Texture picker</h2>
 			<ul class="nav nav-tabs">
-				<li class="{{#if colorPickerTabIs 'block'}}active{{/if}}">
-					<a href="#" data-tab-name="block">Block</a></li>
-				<li class="{{#if colorPickerTabIs 'ground'}}active{{/if}}">
+				<li class="{{#if texturePickerTabIs 'ground'}}active{{/if}}">
 					<a href="#" data-tab-name="ground">Ground</a></li>
-				<li class="{{#if colorPickerTabIs 'background'}}active{{/if}}">
+				<li class="{{#if texturePickerTabIs 'background'}}active{{/if}}">
 					<a href="#" data-tab-name="background">Background</a></li>
 			</ul>
-			<div class="color-picker-content">
-				{{#each colors}}
-					<div class="swatch{{#if activeColor}} active{{/if}}"
-						style="background-color: {{this}}">
-					</div>
+			<div class="texture-picker-content">
+				{{#if texturePickerTabIs 'ground'}}
+				{{#each groundTextures}}
+					<img class="swatch {{#if activeTexture}}active{{/if}}" src="/textures/{{this}}">
 				{{/each}}
+				{{/if}}
+				{{#if texturePickerTabIs 'background'}}
+				{{#each backgroundTextures}}
+					<img src="/textures/skybox/{{this}}">
+				{{/each}}
+				{{/if}}
+			</div>
+		</div>
+
+		<div class="block-picker">
+			<h2>Block settings</h2>
+			<ul class="nav nav-tabs">
+				<li class="{{#if blockTabIs 'texture'}}active{{/if}}">
+					<a href="#" data-tab-name="texture">Texture</a></li>
+				<li class="{{#if blockTabIs 'orientation'}}active{{/if}}">
+					<a href="#" data-tab-name="orientation">Orientation</a></li>
+			</ul>
+			<div class="texture-picker-content">
+				{{#if blockTabIs 'texture'}}
+				{{#each blockTextures}}
+					<img class="swatch {{#if activeTexture}}active{{/if}}" src="/textures/{{this}}">
+				{{/each}}
+				{{/if}}
+				{{#if blockTabIs 'orientation'}}
+
+				asdf
+
+				 <button class="orientate-block btn btn-primary">Horizontal</button>
+
+
+				{{/if}}
 			</div>
 		</div>
 		{{/unless}}
@@ -135,8 +163,6 @@
 			<button class='btn btn-primary btn-sm facebook'>Share on Facebook</button>
 		{{else}}
 			<h2>Collaborate</h2>
-			<p>Anyone can collaborate on this scene if they go to this page.</p>
-			<p>Click publish to save this version and publish it to the front page.</p>
 			<button class="freeze btn btn-sm btn-default">Publish</button>
 			<button class="clone btn btn-sm btn-default">Make a Copy</button>
 		{{/if}}

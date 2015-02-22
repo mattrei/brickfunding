@@ -1,8 +1,8 @@
 // it's not possible to remove all without making a method
 Meteor.methods({
-  setSceneGroundColor: function (sceneId, color) {
+  setSceneGroundTexture: function (sceneId, texture) {
     check(sceneId, String);
-    check(color, String);
+    check(texture, String);
 
     var scene = Scenes.findOne(sceneId);
     if (!scene) {
@@ -14,11 +14,11 @@ Meteor.methods({
     }
 
     Scenes.update({_id: sceneId},
-    { $set: { groundColor: color } });
+    { $set: { groundTexture: texture } });
   },
-  setSceneBackgroundColor: function (sceneId, color) {
+  setSceneBackgroundTexture: function (sceneId, texture) {
     check(sceneId, String);
-    check(color, String);
+    check(texture, String);
 
     var scene = Scenes.findOne(sceneId);
     if (!scene) {
@@ -30,12 +30,16 @@ Meteor.methods({
     }
 
     Scenes.update({_id: sceneId},
-    { $set: { backgroundColor: color } });
+    { $set: { backgroundTexture: texture } });
   },
   addBoxToScene: function (sceneId, box) {
     check(sceneId, String);
     check(box, {
-      color: String,
+      color: "#fff",
+      texture: String,
+      scaleX: Number,
+      scaleY: Number,
+      scaleZ: Number,
       x: Number,
       y: Number,
       z: Number
@@ -212,6 +216,9 @@ Meteor.methods({
         }
       }
     );
+  },
+  log: function(arg) {
+    console.log.apply(console, arg);
   }
 });
 

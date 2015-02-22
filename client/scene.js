@@ -29,7 +29,27 @@ var colors = _.values({
   brown3: "#A66A00"
 });
 
+var blockTextures = _.values({
+  brick1: "block/brick1.jpg",
+  brick2: "block/brick2.jpg",
+  stone1: "block/stone1.jpg",
+});
+
+var groundTextures = _.values({
+  grass1: "ground/grass1.jpg",
+  grass2: "ground/grass2.jpg"
+});
+var backgroundTextures = _.values({
+  skybox1: "ground/grass1.jpg"
+});
+
+Meteor.log = function() {
+  Meteor.call('log', arguments);
+};
+
 Session.setDefault("color", "#7FDBFF");
+Session.setDefault("blockTexture", blockTextures[0]);
+Session.setDefault("blockOrientation", false);
 
 Template.controls.helpers({
   frozen: Utils.frozen,
@@ -42,16 +62,15 @@ Template.controls.helpers({
   createdAt: function () {
     return Utils.currentScene() && moment(Utils.currentScene().createdAt).calendar();
   },
-  // list of colors for color picker
-  colors: colors,
+  blockTextures: blockTextures,
+  groundTextures: groundTextures,
+  backgroundTextures: backgroundTextures,
   // active color helper for color picker
-  activeColor: function () {
-    if (Session.equals("colorPickerTab", "ground")) {
-      return this.valueOf() === Utils.currentScene().groundColor;
-    } else if (Session.equals("colorPickerTab", "background")) {
-      return this.valueOf() === Utils.currentScene().backgroundColor;
-    } else {
-      return this.valueOf() === Session.get("color");
+  activeTexture: function () {
+    if (Session.equals("texturePickerTab", "ground")) {
+      return this.valueOf() === Utils.currentScene().groundTexture;
+    } else if (Session.equals("texturePickerTab", "background")) {
+      return this.valueOf() === Utils.currentScene().backgroundTexture;
     }
   },
   screenshot: function () {
@@ -61,8 +80,11 @@ Template.controls.helpers({
     // check for Facebook API
     return !! FB;
   },
-  colorPickerTabIs: function (tabName) {
-    return (Session.get("colorPickerTab") || "block") === tabName;
+  texturePickerTabIs: function (tabName) {
+    return (Session.get("texturePickerTab") || "ground") === tabName;
+  },
+  blockTabIs: function (tabName) {
+    return (Session.get("blockTab") || "texture") === tabName;
   },
   boxinfo: function() {
     return Session.get("boxinfo");
@@ -74,14 +96,24 @@ Template.controls.events({
   "click .clear-boxes": function () {
     Meteor.call("clearBoxes", Session.get("sceneId"));
   },
-  "click .swatch": function () {
+  "click .texture-picker .swatch": function () {
     var sceneId = Session.get("sceneId");
-    if (Session.equals("colorPickerTab", "ground")) {
-      Meteor.call("setSceneGroundColor", sceneId, this.valueOf());
-    } else if (Session.equals("colorPickerTab", "background")) {
-      Meteor.call("setSceneBackgroundColor", sceneId, this.valueOf());
-    } else {
-      Session.set("color", this.valueOf());
+    if (Session.equals("texturePickerTab", "ground")) {
+      Meteor.call("setSceneGroundTexture", sceneId, this.valueOf());
+    } else if (Session.equals("texturePickerTab", "background")) {
+      Meteor.call("setSceneBackgroundTexture", sceneId, this.valueOf());
+    }
+  },
+  "click .block-picker .swatch": function () {
+    var sceneId = Session.get("sceneId");
+    if (Session.equals("blockTab", "texture")) {
+      Session.set("blockTexture", this.valueOf());
+    }
+  },
+  "click .orientate-block": function (e) {
+    var sceneId = Session.get("sceneId");
+    if (Session.equals("blockTab", "orientation")) {
+      Session.set("blockOrientation", ! Session.get("blockOrientation"));
     }
   },
   "click button.freeze": function () {
@@ -109,10 +141,15 @@ Template.controls.events({
       }
     });
   },
-  "click .color-picker .nav-tabs a": function (event) {
+  "click .texture-picker .nav-tabs a": function (event) {
     event.preventDefault();
     var tabName = event.target.getAttribute("data-tab-name");
-    Session.set("colorPickerTab", tabName);
+    Session.set("texturePickerTab", tabName);
+  },
+  "click .block-picker .nav-tabs a": function (event) {
+    event.preventDefault();
+    var tabName = event.target.getAttribute("data-tab-name");
+    Session.set("blockTab", tabName);
   },
   "click .facebook": function () {
     shareOnFacebook(Session.get("sceneId"));
@@ -123,16 +160,17 @@ Template.scene.helpers({
   boxes: function () {
     return Boxes.find({"sceneId": Session.get("sceneId")});
   },
-  groundColor: function () {
-    // take into account old scenes with no ground color
-    return Utils.currentScene().groundColor || "#4A9";
+  groundTexture: function () {
+    return Utils.currentScene().groundTexture || groundTextures[0];
   },
+  /*
   x3dGroundColor: function () {
     // take into account old scenes with no background color
     var colorString = Utils.currentScene().groundColor || "#4A9";
     var parsed = parseCSSColor(colorString);
     return "" + parsed[0]/255 + " " + parsed[1]/255 + " " + parsed[2]/255;
   },
+  */
   x3dBackgroundColor: function () {
     // take into account old scenes with no background color
     var colorString = Utils.currentScene().backgroundColor || "#fff";
@@ -189,13 +227,13 @@ Meteor.methods({
       }
     );
   },
-  setSceneGroundColor: function (sceneId, color) {
+  setSceneGroundTexture: function (sceneId, texture) {
     Scenes.update({_id: sceneId},
-    { $set: { groundColor: color } });
+    { $set: { groundTexture: texture } });
   },
-  setSceneBackgroundColor: function (sceneId, color) {
+  setSceneBackgroundColor: function (sceneId, texture) {
     Scenes.update({_id: sceneId},
-    { $set: { backgroundColor: color } });
+    { $set: { backgroundTexture: texture } });
   }
 });
 
@@ -216,13 +254,40 @@ Template.scene.events({
   "mouseup shape": function (event) {
     if (!Utils.frozen() && dragged < 5) {
       if (event.button === 1) {
+
+        console.log(event);
+
+
+        var scaleX, scaleY, scaleZ;
+        if (Session.equals("blockOrientation", true)) {
+          scaleX = 0.2;
+          scaleZ = 0.5;
+        } else {
+          scaleX = 0.5;
+          scaleZ = 0.2;
+        }
+        scaleY = 0.5;
+
         // calculate new box position based on location of click event
         // in 3d space and the normal of the surface that was clicked
         var box = {
-          color: Session.get("color"),
+          // mat
+          color: "#fff",
+          texture: Session.get("blockTexture"),
+
+
+          scaleX: scaleX,
+          scaleY: scaleY,
+          scaleZ: scaleZ,
+/*
+          x: Math.floor(event.normalX),
+          y: Math.floor(event.normalY),
+          z: Math.floor(event.normalZ),
+*/
           x: Math.floor(event.worldX + event.normalX / 2) + 0.5,
           y: Math.floor(event.worldY + event.normalY / 2) + 0.5,
           z: Math.floor(event.worldZ + event.normalZ / 2) + 0.5
+
         };
 
         Meteor.call("addBoxToScene", Session.get("sceneId"), box);
@@ -239,14 +304,13 @@ Template.scene.events({
 
     var el = _.pick(event, ["target"]);
     if (el && el.target.nodeName != "PLANE") {
-      console.log(event);
+      //console.log(event);
       Session.set("boxinfo", event.currentTarget.id);
     } else {
       Session.set("boxinfo", 'no');
     }
   },
   "viewpointChanged viewpoint": function (event) {
-    //console.log(_.pick(event, ["orientation", "position", "centerOfRotation"]));
     Session.set("currentViewpoint", _.pick(event,
       ["orientation", "position", "centerOfRotation"]));
   }
