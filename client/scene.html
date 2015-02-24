@@ -29,8 +29,8 @@
 	<!--<background skyColor="{{x3dBackgroundColor}}"></background>-->
 	<background skyColor="0.4 0.4 0.5" backUrl="/skyBox/BK.png" bottomUrl="/skyBox/DN.png" frontUrl="/skyBox/FR.png" leftUrl="skyBox/LF.png" rightUrl="skyBox/RT.png" topUrl="skyBox/UP.png"></background>
 
-	<!-- boxes -->
-	{{#each boxes}}
+	<!-- blocks -->
+	{{#each blocks}}
 		<!-- scale 0.5 because default size of box is 2 units on a side -->
 
 			<transform translation="{{x}} {{y}} {{z}}" scale="1 1 1" rotation="0 1 0 0">
@@ -101,7 +101,7 @@
 		</p>
 
 		{{#unless frozen}}
-		<button class="clear-boxes btn btn-sm btn-default">
+		<button class="clear-blocks btn btn-sm btn-default">
 			Clear all blocks</button>
 
 		<div class="texture-picker">
@@ -134,6 +134,60 @@
 				</label>
 				{{/if}}
 			</div>
+		</div>
+
+		<div class="blocktype-picker">
+			<h2>Blocktypes</h2>
+			<div class="">
+				<button class="add-blocktype btn btn-primary btn-sm" data-toggle="modal" data-target="#myModal">Add</button>
+				<button class="modify-blocktype btn btn-sm">Modify</button>
+				<button class="remove-blocktype btn btn-sm">Remove</button>
+
+				{{#each blockTypes}}
+					<p>{{texture}}</p>
+				{{/each}}
+
+			</div>
+
+
+
+		<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+		  <div class="modal-dialog">
+		    <div class="modal-content">
+		      <div class="modal-header">
+		        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+		        <h4 class="modal-title">Blocktype</h4>
+		      </div>
+					<form class="new-blocktype">
+		      <div class="modal-body">
+		        <h2>Select Texture</h2>
+						<div class="texture-picker-content">
+							{{#each blockTextures}}
+								<img class="swatch {{#if activeTexture}}active{{/if}}" src="/textures/{{this}}">
+							{{/each}}
+						</div>
+
+						<h2>Size</h2>
+						<label class="btn">
+							<input type="number" name="length" min="1" max="5" step="1" value="1" /> Length
+						</label>
+						<label class="btn">
+							<input type="number" name="height" min="1" max="5" step="1" value="1" /> Heigth
+						</label>
+						<label class="btn">
+							<input type="number" name="width" min="1" max="5" step="1" value="1" /> Width
+						</label>
+
+
+		      </div>
+		      <div class="modal-footer">
+		        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+		        <button type="submit" class="btn btn-primary">Add Blocktype</button>
+		      </div>
+					</form>
+		    </div><!-- /.modal-content -->
+		  </div><!-- /.modal-dialog -->
+		</div><!-- /.modal -->
 		</div>
 
 		<div class="block-picker">

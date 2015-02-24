@@ -6,7 +6,7 @@
 	bottom: 0;
 	z-index: 10;
 
-	width: 220px;
+	width: 300px;
 
 	overflow-y: auto;
 
@@ -64,6 +64,43 @@ x3d.active {
 }
 
 .texture-picker {
+	.swatch {
+		width: 100px;
+		height: 100px;
+		color: white;
+		margin: 0 3px 3px 0;
+		border: 2px solid transparent;
+
+		display: inline-block;
+		cursor: pointer;
+
+		&.white {
+			border-color: #ccc;
+		}
+
+		&:hover {
+			border-color: black;
+		}
+
+		&.active {
+			border-color: black;
+		}
+	}
+
+	.nav-tabs li a {
+		padding: 3px 5px;
+		font-size: 0.9em;
+	}
+
+	.texture-picker-content {
+		background: white;
+		padding: 7px 4px 4px 7px;
+		border: 1px solid #ddd;
+		border-top-style: none;
+	}
+}
+
+.blocktype-picker {
 	.swatch {
 		width: 100px;
 		height: 100px;

@@ -36,7 +36,7 @@ var RouterClass = Backbone.Router.extend({
           // set default mode
           Session.set("mode", "build");
         }
-        Meteor.subscribe("boxes", sceneId, function () {
+        Meteor.subscribe("blocks", sceneId, function () {
           Session.set("sceneId", sceneId);
           Session.set("loading", false);
         });

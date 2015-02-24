@@ -40,7 +40,7 @@ var groundTextures = _.values({
   grass2: "ground/grass2.jpg"
 });
 var backgroundTextures = _.values({
-  skybox1: "ground/grass1.jpg"
+  skyblock1: "ground/grass1.jpg"
 });
 
 Meteor.log = function() {
@@ -69,11 +69,16 @@ Template.controls.helpers({
   groundTextures: groundTextures,
   backgroundTextures: backgroundTextures,
 
+  blockTypes: function() {
+    return BlocksTypes.find({"sceneId": Session.get("sceneId")});
+  },
   activeTexture: function () {
     if (Session.equals("scenePickerTab", "ground")) {
       return this.valueOf() === Utils.currentScene().groundTexture;
     } else if (Session.equals("scenePickerTab", "background")) {
       return this.valueOf() === Utils.currentScene().backgroundTexture;
+    } else {
+      return this.valueOf() === Session.get("blockTexture");
     }
   },
   screenshot: function () {
@@ -89,15 +94,32 @@ Template.controls.helpers({
   blockTabIs: function (tabName) {
     return (Session.get("blockTab") || "texture") === tabName;
   },
-  boxinfo: function() {
-    return Session.get("boxinfo");
-    //return Utils.hoveredBox().target.nodeName;
+  blockinfo: function() {
+    return Session.get("blockinfo");
+    //return Utils.hoveredBlock().target.nodeName;
   }
 });
 
 Template.controls.events({
-  "click .clear-boxes": function () {
-    Meteor.call("clearBoxes", Session.get("sceneId"));
+  "submit .new-blocktype": function (event) {
+    event.preventDefault(); // prevent from submitting
+    if (!Utils.frozen()) {
+
+      var blockType = {
+        color: "#fff",
+        texture: Session.get("blockTexture"),
+        sizeX: parseInt(event.target.length.value),
+        sizeY: parseInt(event.target.height.value),
+        sizeZ: parseInt(event.target.width.value)
+      };
+
+      console.log(blockType);
+
+      Meteor.call("addBlockTypeToScene", Session.get("sceneId"), blockType);
+    }
+  },
+  "click .clear-blocks": function () {
+    Meteor.call("clearBlocks", Session.get("sceneId"));
   },
   "click .texture-picker .swatch": function () {
     var sceneId = Session.get("sceneId");
@@ -107,11 +129,8 @@ Template.controls.events({
       Meteor.call("setSceneBackgroundTexture", sceneId, this.valueOf());
     }
   },
-  "click .block-picker .swatch": function () {
-    var sceneId = Session.get("sceneId");
-    if (Session.equals("blockTab", "texture")) {
-      Session.set("blockTexture", this.valueOf());
-    }
+  "click .blocktype-picker .swatch": function () {
+    Session.set("blockTexture", this.valueOf());
   },
   "click .orientate-block": function (e) {
     var sceneId = Session.get("sceneId");
@@ -168,8 +187,8 @@ Template.controls.events({
 });
 
 Template.scene.helpers({
-  boxes: function () {
-    return Boxes.find({"sceneId": Session.get("sceneId")});
+  blocks: function () {
+    return Blocks.find({"sceneId": Session.get("sceneId")});
   },
   groundTexture: function () {
     return Utils.currentScene().groundTexture || groundTextures[0];
@@ -228,12 +247,16 @@ Template.scene.helpers({
 
 // method stub for faster performance on the frontend
 Meteor.methods({
-  addBoxToScene: function (sceneId, box) {
-    box.sceneId = sceneId;
-    Boxes.insert(box);
+  addBlockToScene: function (sceneId, block) {
+    block.sceneId = sceneId;
+    Blocks.insert(block);
   },
-  removeBoxFromScene: function (sceneId, boxId) {
-    Boxes.remove(boxId);
+  addBlockTypeToScene: function (sceneId, blockType) {
+    blockType.sceneId = sceneId;
+    BlockTypes.insert(blockType);
+  },
+  removeBlockFromScene: function (sceneId, blockId) {
+    Blocks.remove(blockId);
   },
   freezeScene: function (sceneId, screenshot, viewpoint) {
     Scenes.update(
@@ -290,9 +313,9 @@ Template.scene.events({
         }
 
 
-        // calculate new box position based on location of click event
+        // calculate new block position based on location of click event
         // in 3d space and the normal of the surface that was clicked
-        var box = {
+        var block = {
           // mat
           color: "#fff",
           texture: Session.get("blockTexture"),
@@ -312,13 +335,13 @@ Template.scene.events({
 */
         };
 
-        Meteor.call("addBoxToScene", Session.get("sceneId"), box);
+        Meteor.call("addBlockToScene", Session.get("sceneId"), block);
       } else if (event.button === 2) {
-        // right click to remove box
-        Meteor.call("removeBoxFromScene",
+        // right click to remove block
+        Meteor.call("removeBlockFromScene",
           Session.get("sceneId"), event.currentTarget.id);
       } else if (event.button === 4) {
-        Meteor.call("donateBox", event.currentTarget.id);
+        Meteor.call("donateBlock", event.currentTarget.id);
       }
     }
   },
@@ -327,9 +350,9 @@ Template.scene.events({
     var el = _.pick(event, ["target"]);
     if (el && el.target.nodeName != "PLANE") {
       //console.log(event);
-      Session.set("boxinfo", event.currentTarget.id);
+      Session.set("blockinfo", event.currentTarget.id);
     } else {
-      Session.set("boxinfo", 'no');
+      Session.set("blockinfo", 'no');
     }
   },
   "viewpointChanged viewpoint": function (event) {

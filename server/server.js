@@ -32,9 +32,31 @@ Meteor.methods({
     Scenes.update({_id: sceneId},
     { $set: { backgroundTexture: texture } });
   },
-  addBoxToScene: function (sceneId, box) {
+  addBlockTypeToScene: function (sceneId, blockType) {
     check(sceneId, String);
-    check(box, {
+    check(blockType, {
+      color: String,
+      texture: String,
+      sizeX: Number,
+      sizeY: Number,
+      sizeZ: Number
+    });
+
+    var scene = Scenes.findOne(sceneId);
+    if (!scene) {
+      throw new Meteor.Error(403, "Scene doesn't exist.");
+    }
+
+    if (scene.frozen) {
+      throw new Meteor.Error(403, "Can't add blocktypes to frozen scene.");
+    }
+
+    blockType.sceneId = sceneId;
+    BlockTypes.insert(blockType);
+  },
+  addBlockToScene: function (sceneId, block) {
+    check(sceneId, String);
+    check(block, {
       color: "#fff",
       texture: String,
       sizeX: Number,
@@ -54,24 +76,24 @@ Meteor.methods({
       throw new Meteor.Error(403, "Can't add blocks to frozen scene.");
     }
 
-    box.sceneId = sceneId;
-    Boxes.insert(box);
+    block.sceneId = sceneId;
+    Blocks.insert(block);
   },
-  donateBox: function (boxId) {
-    check(boxId, String);
+  donateBlock: function (blockId) {
+    check(blockId, String);
 
-    var box = Boxes.findOne(boxId);
-    if (!box) {
-      throw new Meteor.Error(403, "Box doesn't exist.");
+    var block = Blocks.findOne(blockId);
+    if (!block) {
+      throw new Meteor.Error(403, "Block doesn't exist.");
     }
 
-    if (box.frozen) {
+    if (block.frozen) {
       throw new Meteor.Error(403, "Can't donate blocks to frozen scene.");
     }
 
 
-    Boxes.update(
-      { _id: boxId },
+    Blocks.update(
+      { _id: blockId },
       { $set:
         {
           donated: true,
@@ -80,13 +102,13 @@ Meteor.methods({
       }
     );
   },
-  removeBoxFromScene: function (sceneId, boxId) {
+  removeBlockFromScene: function (sceneId, blockId) {
     check(sceneId, String);
-    check(boxId, String);
+    check(blockId, String);
 
-    var box = Boxes.findOne(boxId);
-    if (box.sceneId !== sceneId) {
-      throw new Meteor.Error(403, "Box doesn't belong to this scene.");
+    var block = Blocks.findOne(blockId);
+    if (block.sceneId !== sceneId) {
+      throw new Meteor.Error(403, "Block doesn't belong to this scene.");
     }
 
     var scene = Scenes.findOne(sceneId);
@@ -98,9 +120,9 @@ Meteor.methods({
       throw new Meteor.Error(403, "Can't remove blocks from frozen scene.");
     }
 
-    Boxes.remove(boxId);
+    Blocks.remove(blockId);
   },
-  clearBoxes: function (sceneId) {
+  clearBlocks: function (sceneId) {
     check(sceneId, String);
 
     var scene = Scenes.findOne(sceneId);
@@ -112,7 +134,7 @@ Meteor.methods({
       throw new Meteor.Error(403, "Can't remove blocks from frozen scene.");
     }
 
-    Boxes.remove({sceneId: sceneId});
+    Blocks.remove({sceneId: sceneId});
   },
   newScene: function () {
     var id = Scenes.insert({
@@ -141,13 +163,13 @@ Meteor.methods({
       clonedFrom: sceneId
     }));
 
-    // get all old boxes
-    var boxes = Boxes.find({sceneId: sceneId}).fetch();
-    boxes.forEach(function (box) {
-      delete box._id;
-      box.sceneId = id;
+    // get all old blocks
+    var blocks = Blocks.find({sceneId: sceneId}).fetch();
+    blocks.forEach(function (block) {
+      delete block._id;
+      block.sceneId = id;
 
-      Boxes.insert(box);
+      Blocks.insert(block);
     });
 
     return id;
@@ -233,11 +255,11 @@ Meteor.publish("frozenScenes", function () {
   return Scenes.find({frozen: true});
 });
 
-Meteor.publish("boxes", function (sceneId) {
+Meteor.publish("blocks", function (sceneId) {
   check(sceneId, String);
 
   if (sceneId) {
-    return Boxes.find({sceneId: sceneId});
+    return Blocks.find({sceneId: sceneId});
   } else {
     return [];
   }
