@@ -38,6 +38,8 @@ var RouterClass = Backbone.Router.extend({
         }
         Meteor.subscribe("blocks", sceneId, function () {
           Session.set("sceneId", sceneId);
+        });
+        Meteor.subscribe("blockTypes", sceneId, function () {
           Session.set("loading", false);
         });
       } else {

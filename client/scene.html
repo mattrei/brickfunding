@@ -37,7 +37,7 @@
 	    <shape id="{{_id}}">
 	      <appearance>
 	      	<!-- could be improved to have texture and not just color -->
-					<ImageTexture  url="/textures/{{texture}}"></ImageTexture>
+					<ImageTexture  url="/textures/{{blockTypeId.texture}}"></ImageTexture>
 					{{#if donated}}
 					<material diffuseColor="{{color}}" ambientIntensity="1"
 						shininess="0"></material>
@@ -72,6 +72,7 @@
 </template>
 
 <template name="controls">
+
 	<div class="controls">
 		<h1>
 			<a href="#/">
@@ -139,92 +140,11 @@
 		<div class="blocktype-picker">
 			<h2>Blocktypes</h2>
 			<div class="">
-				<button class="add-blocktype btn btn-primary btn-sm" data-toggle="modal" data-target="#myModal">Add</button>
-				<button class="modify-blocktype btn btn-sm">Modify</button>
-				<button class="remove-blocktype btn btn-sm">Remove</button>
-
-				{{#each blockTypes}}
-					<p>{{texture}}</p>
-				{{/each}}
-
+				{{> blocktype}}
 			</div>
-
-
-
-		<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-		  <div class="modal-dialog">
-		    <div class="modal-content">
-		      <div class="modal-header">
-		        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-		        <h4 class="modal-title">Blocktype</h4>
-		      </div>
-					<form class="new-blocktype">
-		      <div class="modal-body">
-		        <h2>Select Texture</h2>
-						<div class="texture-picker-content">
-							{{#each blockTextures}}
-								<img class="swatch {{#if activeTexture}}active{{/if}}" src="/textures/{{this}}">
-							{{/each}}
-						</div>
-
-						<h2>Size</h2>
-						<label class="btn">
-							<input type="number" name="length" min="1" max="5" step="1" value="1" /> Length
-						</label>
-						<label class="btn">
-							<input type="number" name="height" min="1" max="5" step="1" value="1" /> Heigth
-						</label>
-						<label class="btn">
-							<input type="number" name="width" min="1" max="5" step="1" value="1" /> Width
-						</label>
-
-
-		      </div>
-		      <div class="modal-footer">
-		        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-		        <button type="submit" class="btn btn-primary">Add Blocktype</button>
-		      </div>
-					</form>
-		    </div><!-- /.modal-content -->
-		  </div><!-- /.modal-dialog -->
-		</div><!-- /.modal -->
-		</div>
-
-		<div class="block-picker">
-			<h2>Block</h2>
-			<ul class="nav nav-tabs">
-				<li class="{{#if blockTabIs 'texture'}}active{{/if}}">
-					<a href="#" data-tab-name="texture">Texture</a></li>
-				<li class="{{#if blockTabIs 'size'}}active{{/if}}">
-					<a href="#" data-tab-name="size">Size</a></li>
-				<li class="{{#if blockTabIs 'orientation'}}active{{/if}}">
-					<a href="#" data-tab-name="orientation">Orientation</a></li>
-			</ul>
-			<div class="texture-picker-content">
-				{{#if blockTabIs 'texture'}}
-				{{#each blockTextures}}
-					<img class="swatch {{#if activeTexture}}active{{/if}}" src="/textures/{{this}}">
-				{{/each}}
-				{{/if}}
-				{{#if blockTabIs 'orientation'}}
-
-				asdf
-
-				 <button class="orientate-block btn btn-primary">Horizontal</button>
-
-
-				{{/if}}
-				{{#if blockTabIs 'size'}}
-				<label class="btn">
-					<input type="number" id="blockLength" min="1" max="5" step="1" value="1" /> Length
-				</label>
-				<label class="btn">
-					<input type="number" id="blockHeigth" min="1" max="5" step="1" value="1" /> Heigth
-				</label>
-				<label class="btn">
-					<input type="number" id="blockWidth" min="1" max="5" step="1" value="1" /> Width
-				</label>
-				{{/if}}
+			<div class="">
+				<p>Rotation</p>
+				<button class="orientate-block btn btn-primary">Horizontal</button>
 			</div>
 		</div>
 		{{/unless}}
@@ -249,4 +169,56 @@
 
 <template name="boxinfo">
 
+</template>
+
+<template name="blocktype">
+
+	<button class="add-blocktype btn btn-primary btn-sm" data-toggle="modal" data-target="#modal-create-blocktype">Create</button>
+
+	<div class="blocktype-picker-content">
+		{{#each blockTypes}}
+			BT:
+			<img class="swatch {{#if activeBlockType}}active{{/if}}" src="/textures/{{texture}}">
+			{{sizeX}} x {{sizeY}} x {{sizeZ}}
+			<button class="remove-blocktype btn btn-sm" data-blocktype="{{_id}}">X</button>
+		{{/each}}
+	</div>
+
+	<div class="modal" id="modal-create-blocktype" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+		<div class="modal-dialog">
+			<div class="modal-content">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+					<h4 class="modal-title">Create a new Blocktype</h4>
+				</div>
+				<form class="new-blocktype">
+				<div class="modal-body">
+					<h2>Select Texture</h2>
+					<div class="texture-picker-content">
+						{{#each blockTextures}}
+							<img class="swatch {{#if activeTexture}}active{{/if}}" src="/textures/{{this}}">
+						{{/each}}
+					</div>
+
+					<h2>Size</h2>
+					<label class="btn">
+						<input type="number" name="length" min="1" max="5" step="1" value="1" /> Length
+					</label>
+					<label class="btn">
+						<input type="number" name="height" min="1" max="5" step="1" value="1" /> Heigth
+					</label>
+					<label class="btn">
+						<input type="number" name="width" min="1" max="5" step="1" value="1" /> Width
+					</label>
+
+
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+					<button type="submit" class="btn btn-primary">Add Blocktype</button>
+				</div>
+				</form>
+			</div><!-- /.modal-content -->
+		</div><!-- /.modal-dialog -->
+	</div><!-- /.modal -->
 </template>

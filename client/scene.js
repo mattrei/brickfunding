@@ -1,34 +1,3 @@
-// colors from https://github.com/mrmrs/colors/blob/master/less/_variables.less
-var colors = _.values({
-  // Cool
-  aqua: "#7FDBFF",
-  blue: "#0074D9",
-  navy: "#001F3F",
-  teal: "#39CCCC",
-  green: "#2ECC40",
-  olive: "#3D9970",
-  lime:  "#01FF70",
-
-  // Warm
-  yellow:  "#FFDC00",
-  orange:  "#FF851B",
-  red:     "#FF4136",
-  fuchsia: "#F012BE",
-  purple:  "#B10DC9",
-  maroon:  "#85144B",
-
-  // Gray size
-  white:  "#fff",
-  silver: "#ddd",
-  gray:   "#aaa",
-  black:  "#111",
-
-  // Browns (for natural scenes)
-  brown1: "#A64300",
-  brown2: "#BF6A30",
-  brown3: "#A66A00"
-});
-
 var blockTextures = _.values({
   brick1: "block/brick1.jpg",
   brick2: "block/brick2.jpg",
@@ -49,8 +18,9 @@ Meteor.log = function() {
 
 Session.setDefault("groundWidth", 30);
 Session.setDefault("groundHeight", 30);
-Session.setDefault("groundTexture", groundTextures[0]);
-Session.setDefault("backgroundTexture", backgroundTextures[0]);
+//Session.setDefault("groundTexture", groundTextures[0]);
+//Session.setDefault("backgroundTexture", backgroundTextures[0]);
+
 Session.setDefault("blockTexture", blockTextures[0]);
 Session.setDefault("blockOrientation", false);
 
@@ -65,13 +35,8 @@ Template.controls.helpers({
   createdAt: function () {
     return Utils.currentScene() && moment(Utils.currentScene().createdAt).calendar();
   },
-  blockTextures: blockTextures,
   groundTextures: groundTextures,
   backgroundTextures: backgroundTextures,
-
-  blockTypes: function() {
-    return BlocksTypes.find({"sceneId": Session.get("sceneId")});
-  },
   activeTexture: function () {
     if (Session.equals("scenePickerTab", "ground")) {
       return this.valueOf() === Utils.currentScene().groundTexture;
@@ -100,7 +65,27 @@ Template.controls.helpers({
   }
 });
 
-Template.controls.events({
+Template.blocktype.helpers({
+  blockTextures: blockTextures,
+  blockTypes: function() {
+    return BlockTypes.find({"sceneId": Session.get("sceneId")});
+  },
+  activeBlockType: function () {
+    return this.valueOf()._id === Session.get("blockType")._id;
+  },
+  activeTexture: function () {
+    return this.valueOf() === Session.get("blockTexture");
+  }
+});
+
+Template.blocktype.events({
+
+  "click button.remove-blocktype": function (event) {
+    event.preventDefault();
+    var blockTypeId = event.target.getAttribute("data-blocktype");
+    Meteor.call("removeBlockTypeFromScene",
+      Session.get("sceneId"), blockTypeId);
+  },
   "submit .new-blocktype": function (event) {
     event.preventDefault(); // prevent from submitting
     if (!Utils.frozen()) {
@@ -118,6 +103,17 @@ Template.controls.events({
       Meteor.call("addBlockTypeToScene", Session.get("sceneId"), blockType);
     }
   },
+  "click .blocktype-picker-content .swatch": function () {
+    console.log(this.valueOf());
+    Session.set("blockType", this.valueOf());
+  },
+  "click .texture-picker-content .swatch": function () {
+    Session.set("blockTexture", this.valueOf());
+  },
+});
+
+Template.controls.events({
+
   "click .clear-blocks": function () {
     Meteor.call("clearBlocks", Session.get("sceneId"));
   },
@@ -128,9 +124,6 @@ Template.controls.events({
     } else if (Session.equals("scenePickerTab", "background")) {
       Meteor.call("setSceneBackgroundTexture", sceneId, this.valueOf());
     }
-  },
-  "click .blocktype-picker .swatch": function () {
-    Session.set("blockTexture", this.valueOf());
   },
   "click .orientate-block": function (e) {
     var sceneId = Session.get("sceneId");
@@ -258,6 +251,9 @@ Meteor.methods({
   removeBlockFromScene: function (sceneId, blockId) {
     Blocks.remove(blockId);
   },
+  removeBlockTypeFromScene: function (sceneId, blockTypeId) {
+    BlockTypes.remove(blockTypeId);
+  },
   freezeScene: function (sceneId, screenshot, viewpoint) {
     Scenes.update(
       { _id: sceneId },
@@ -298,36 +294,16 @@ Template.scene.events({
     if (!Utils.frozen() && dragged < 5) {
       if (event.button === 1) {
 
-        console.log(event);
-
-
-        var sizeX, sizeY, sizeZ;
-        if (Session.equals("blockOrientation", true)) {
-          sizeX = 2;
-          sizeZ = 1;
-          sizeY = 1;
-        } else {
-          sizeX = 1;
-          sizeZ = 2;
-          sizeY = 1;
-        }
-
+        var blockType = Session.get("blockType");
+        console.log(blockType);
 
         // calculate new block position based on location of click event
         // in 3d space and the normal of the surface that was clicked
         var block = {
-          // mat
-          color: "#fff",
-          texture: Session.get("blockTexture"),
-
-
-          sizeX: sizeX,
-          sizeY: sizeY,
-          sizeZ: sizeZ,
-
-          x: Math.floor(event.worldX + event.normalX / 2) + 0.5 * sizeX,
-          y: Math.floor(event.worldY + event.normalY / 2) + 0.5 * sizeY,
-          z: Math.floor(event.worldZ + event.normalZ / 2) + 0.5 * sizeZ,
+          blockTypeId: blockType._id,
+          x: Math.floor(event.worldX + event.normalX / 2) + 0.5 * blockType.sizeX,
+          y: Math.floor(event.worldY + event.normalY / 2) + 0.5 * blockType.sizeY,
+          z: Math.floor(event.worldZ + event.normalZ / 2) + 0.5 * blockType.sizeZ,
 /*
           x: Math.floor(event.worldX + event.normalX / 2) + 0.5,
           y: Math.floor(event.worldY + event.normalY / 2) + 0.5,
