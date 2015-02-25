@@ -41,6 +41,7 @@ var RouterClass = Backbone.Router.extend({
 
         console.log("created scene");
         console.log(scene);
+
         Session.set("groundWidth", scene.groundWidth);
         Session.set("groundLength", scene.groundLength);
 
