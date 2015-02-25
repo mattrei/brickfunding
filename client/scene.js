@@ -16,16 +16,26 @@ Meteor.log = function() {
   Meteor.call('log', arguments);
 };
 
-Session.setDefault("groundWidth", 30);
-Session.setDefault("groundHeight", 30);
+
 //Session.setDefault("groundTexture", groundTextures[0]);
 //Session.setDefault("backgroundTexture", backgroundTextures[0]);
 
 Session.setDefault("blockTexture", blockTextures[0]);
 Session.setDefault("blockOrientation", false);
 
+Session.setDefault("blockXAxis", 1);
+Session.setDefault("blockYAxis", 1);
+Session.setDefault("blockZAxis", 1);
+
+
 Template.controls.helpers({
   frozen: Utils.frozen,
+  groundLength: function () {
+    return Session.get("groundLength");
+  },
+  groundWidth: function () {
+    return Session.get("groundWidth");
+  },
   sceneId: function () {
     return Session.get("sceneId");
   },
@@ -61,20 +71,21 @@ Template.controls.helpers({
   },
   blockinfo: function() {
     return Session.get("blockinfo");
-    //return Utils.hoveredBlock().target.nodeName;
   }
 });
 
 Template.blocktype.helpers({
   blockTextures: blockTextures,
   blockTypes: function() {
-    return BlockTypes.find({"sceneId": Session.get("sceneId")});
+    return Utils.currentScene().blockTypes;
   },
   activeBlockType: function () {
-    return this.valueOf()._id === Session.get("blockType")._id;
+    return (Session.get("blockType") || this.valueOf() ||
+      this.valueOf().name === Session.get("blockType").name);
   },
   activeTexture: function () {
-    return this.valueOf() === Session.get("blockTexture");
+    return (Session.get("blockTexture") ||
+      this.valueOf() === Session.get("blockTexture"));
   }
 });
 
@@ -82,29 +93,24 @@ Template.blocktype.events({
 
   "click button.remove-blocktype": function (event) {
     event.preventDefault();
-    var blockTypeId = event.target.getAttribute("data-blocktype");
-    Meteor.call("removeBlockTypeFromScene",
-      Session.get("sceneId"), blockTypeId);
+    Meteor.call("removeBlockTypeFromScene", Session.get("sceneId"), this);
   },
   "submit .new-blocktype": function (event) {
     event.preventDefault(); // prevent from submitting
     if (!Utils.frozen()) {
 
       var blockType = {
+        name: event.target.name.value,
         color: "#fff",
         texture: Session.get("blockTexture"),
         sizeX: parseInt(event.target.length.value),
         sizeY: parseInt(event.target.height.value),
         sizeZ: parseInt(event.target.width.value)
       };
-
-      console.log(blockType);
-
       Meteor.call("addBlockTypeToScene", Session.get("sceneId"), blockType);
     }
   },
   "click .blocktype-picker-content .swatch": function () {
-    console.log(this.valueOf());
     Session.set("blockType", this.valueOf());
   },
   "click .texture-picker-content .swatch": function () {
@@ -169,19 +175,39 @@ Template.controls.events({
   "click .facebook": function () {
     shareOnFacebook(Session.get("sceneId"));
   },
-  "change #sliderWidth": function () {
-    console.log(this.valueOf());
-    Session.set("sceneWidth", this.valueOf());
+  "change #sliderWidth": function (event) {
+    event.preventDefault();
+    var v = parseInt(event.currentTarget.value);
+    Session.set("groundWidth", v);
+    Meteor.call("setSceneGroundWidth", Session.get("sceneId"), v);
   },
-  "change #sliderHeight": function () {
-    console.log(this);
-    Session.set("sceneHeight", this.valueOf());
+  "change #sliderLength": function (event) {
+    event.preventDefault();
+    var v = parseInt(event.currentTarget.value);
+    Session.set("groundLength", v);
+    Meteor.call("setSceneGroundLength", Session.get("sceneId"), v);
   }
 });
 
+Template.block.events({
+  "change #xAxis": function (event) {
+    event.preventDefault();
+    Session.set("blockXAxis", parseInt(event.currentTarget.value));
+  },
+  "change #yAxis": function (event) {
+    event.preventDefault();
+    var y = parseInt(event.currentTarget.value) / 6.18;
+    Session.set("blockYAxis", y);
+  },
+  "change #zAxis": function (event) {
+    event.preventDefault();
+    Session.set("blockZAxis", parseInt(event.currentTarget.value));
+  },
+});
+
 Template.scene.helpers({
-  blocks: function () {
-    return Blocks.find({"sceneId": Session.get("sceneId")});
+  blockTypes: function () {
+    return Utils.currentScene().blockTypes;
   },
   groundTexture: function () {
     return Utils.currentScene().groundTexture || groundTextures[0];
@@ -189,8 +215,8 @@ Template.scene.helpers({
   groundSize: function () {
     var scene = Utils.currentScene();
 
-    if (scene && scene.size) {
-      return scene.size.join(" ");
+    if (scene) {
+      return Session.get("groundLength") + " " + Session.get("groundWidth");
     } else {
       return "30 30";
     }
@@ -238,6 +264,7 @@ Template.scene.helpers({
   }
 });
 
+/*
 // method stub for faster performance on the frontend
 Meteor.methods({
   addBlockToScene: function (sceneId, block) {
@@ -275,6 +302,7 @@ Meteor.methods({
     { $set: { backgroundTexture: texture } });
   }
 });
+*/
 
 // how many pixels has the mouse been dragged since last mousedown
 // used to determine if we should place a block or not
@@ -295,27 +323,24 @@ Template.scene.events({
       if (event.button === 1) {
 
         var blockType = Session.get("blockType");
-        console.log(blockType);
-
-        // calculate new block position based on location of click event
-        // in 3d space and the normal of the surface that was clicked
         var block = {
-          blockTypeId: blockType._id,
+          rotX: Session.get("blockXAxis"),
+          rotY: Session.get("blockYAxis"),
+          rotZ: Session.get("blockZAxis"),
+
           x: Math.floor(event.worldX + event.normalX / 2) + 0.5 * blockType.sizeX,
           y: Math.floor(event.worldY + event.normalY / 2) + 0.5 * blockType.sizeY,
-          z: Math.floor(event.worldZ + event.normalZ / 2) + 0.5 * blockType.sizeZ,
-/*
-          x: Math.floor(event.worldX + event.normalX / 2) + 0.5,
-          y: Math.floor(event.worldY + event.normalY / 2) + 0.5,
-          z: Math.floor(event.worldZ + event.normalZ / 2) + 0.5
-*/
+          z: Math.floor(event.worldZ + event.normalZ / 2) + 0.5 * blockType.sizeZ
         };
-
-        Meteor.call("addBlockToScene", Session.get("sceneId"), block);
+        console.log("adding");
+        console.log(blockType);
+        console.log(block);
+        Meteor.call("addBlockToScene", Session.get("sceneId"), blockType, block);
       } else if (event.button === 2) {
         // right click to remove block
+        console.log(this);
         Meteor.call("removeBlockFromScene",
-          Session.get("sceneId"), event.currentTarget.id);
+          Session.get("sceneId"), this /*event.currentTarget.id*/);
       } else if (event.button === 4) {
         Meteor.call("donateBlock", event.currentTarget.id);
       }
@@ -325,7 +350,6 @@ Template.scene.events({
 
     var el = _.pick(event, ["target"]);
     if (el && el.target.nodeName != "PLANE") {
-      //console.log(event);
       Session.set("blockinfo", event.currentTarget.id);
     } else {
       Session.set("blockinfo", 'no');

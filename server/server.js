@@ -32,9 +32,42 @@ Meteor.methods({
     Scenes.update({_id: sceneId},
     { $set: { backgroundTexture: texture } });
   },
+  setSceneGroundWidth: function (sceneId, width) {
+    check(sceneId, String);
+    check(width, Number);
+
+    var scene = Scenes.findOne(sceneId);
+    if (!scene) {
+      throw new Meteor.Error(403, "Scene doesn't exist.");
+    }
+
+    if (scene.frozen) {
+      throw new Meteor.Error(403, "Can't add blocks to frozen scene.");
+    }
+
+    Scenes.update({_id: sceneId},
+    { $set: { groundWidth: width } });
+  },
+  setSceneGroundLength: function (sceneId, length) {
+    check(sceneId, String);
+    check(length, Number);
+
+    var scene = Scenes.findOne(sceneId);
+    if (!scene) {
+      throw new Meteor.Error(403, "Scene doesn't exist.");
+    }
+
+    if (scene.frozen) {
+      throw new Meteor.Error(403, "Can't add blocks to frozen scene.");
+    }
+
+    Scenes.update({_id: sceneId},
+    { $set: { groundLength: length } });
+  },
   addBlockTypeToScene: function (sceneId, blockType) {
     check(sceneId, String);
     check(blockType, {
+      name: String,
       color: String,
       texture: String,
       sizeX: Number,
@@ -51,13 +84,17 @@ Meteor.methods({
       throw new Meteor.Error(403, "Can't add blocktypes to frozen scene.");
     }
 
-    blockType.sceneId = sceneId;
-    BlockTypes.insert(blockType);
+    Scenes.update(
+      {_id: sceneId},
+      { $addToSet: { blockTypes: blockType } }
+    );
   },
-  addBlockToScene: function (sceneId, block) {
+  addBlockToScene: function (sceneId, blockType, block) {
     check(sceneId, String);
     check(block, {
-      blockTypeId: String,
+      rotX: Number,
+      rotY: Number,
+      rotZ: Number,
       x: Number,
       y: Number,
       z: Number
@@ -72,11 +109,11 @@ Meteor.methods({
       throw new Meteor.Error(403, "Can't add blocks to frozen scene.");
     }
 
-    block.sceneId = sceneId;
-    Blocks.insert(block);
-
-    BlockTypes.update({_id: block.blockTypeId},
-    { $inc: { counter: 1 } });
+    console.log("adding " + blockType.name);
+    Scenes.update(
+      {_id: sceneId, "blockTypes.name": blockType.name},
+      { $addToSet: { "blockTypes.$.blocks": block }}
+    );
   },
   donateBlock: function (blockId) {
     check(blockId, String);
@@ -101,14 +138,8 @@ Meteor.methods({
       }
     );
   },
-  removeBlockFromScene: function (sceneId, blockId) {
+  removeBlockFromScene: function (sceneId, block) {
     check(sceneId, String);
-    check(blockId, String);
-
-    var block = Blocks.findOne(blockId);
-    if (block.sceneId !== sceneId) {
-      throw new Meteor.Error(403, "Block doesn't belong to this scene.");
-    }
 
     var scene = Scenes.findOne(sceneId);
     if (! scene) {
@@ -119,16 +150,13 @@ Meteor.methods({
       throw new Meteor.Error(403, "Can't remove blocks from frozen scene.");
     }
 
-    Blocks.remove(blockId);
+    Scenes.update(
+      {_id: sceneId , "blockTypes.blocks": block},
+      { $pull: { "blockTypes.$.blocks": block } }
+    );
   },
-  removeBlockTypeFromScene: function (sceneId, blockTypeId) {
+  removeBlockTypeFromScene: function (sceneId, blockType) {
     check(sceneId, String);
-    check(blockTypeId, String);
-
-    var blockType = BlockTypes.findOne(blockTypeId);
-    if (blockType.sceneId !== sceneId) {
-      throw new Meteor.Error(403, "Blocktype doesn't belong to this scene.");
-    }
 
     var scene = Scenes.findOne(sceneId);
     if (! scene) {
@@ -139,7 +167,10 @@ Meteor.methods({
       throw new Meteor.Error(403, "Can't remove blocktypes from frozen scene.");
     }
 
-    BlockTypes.remove(blockTypeId);
+    Scenes.update(
+      {_id: sceneId},
+      { $pull: { blockTypes: blockType } }
+    );
   },
   clearBlocks: function (sceneId) {
     check(sceneId, String);
@@ -158,9 +189,8 @@ Meteor.methods({
   newScene: function () {
     var id = Scenes.insert({
       createdAt: new Date(),
-      size: [30, 30]
-      //backgroundColor: "#fff",
-      //groundColor: "#4a9"
+      groundWidth: 30,
+      groundLength: 30
     });
 
     return id;
@@ -274,6 +304,7 @@ Meteor.publish("frozenScenes", function () {
   return Scenes.find({frozen: true});
 });
 
+/*
 Meteor.publish("blocks", function (sceneId) {
   check(sceneId, String);
 
@@ -293,3 +324,4 @@ Meteor.publish("blockTypes", function (sceneId) {
     return [];
   }
 });
+*/

@@ -22,33 +22,40 @@
   		<appearance>
 				<ImageTexture  url="/textures/{{groundTexture}}"></ImageTexture>
 	  	</appearance>
-	  	<plane size="30 30"></plane>
+	  	<plane size="{{groundSize}}"></plane>
 	  </shape>
 	</transform>
 
 	<!--<background skyColor="{{x3dBackgroundColor}}"></background>-->
-	<background skyColor="0.4 0.4 0.5" backUrl="/skyBox/BK.png" bottomUrl="/skyBox/DN.png" frontUrl="/skyBox/FR.png" leftUrl="skyBox/LF.png" rightUrl="skyBox/RT.png" topUrl="skyBox/UP.png"></background>
+	<background skyColor="0.4 0.4 0.5" backUrl="/skyBox/BK.png"
+	bottomUrl="/skyBox/DN.png" frontUrl="/skyBox/FR.png"
+	leftUrl="skyBox/LF.png" rightUrl="skyBox/RT.png"
+	topUrl="skyBox/UP.png"></background>
+
 
 	<!-- blocks -->
-	{{#each blocks}}
-		<!-- scale 0.5 because default size of box is 2 units on a side -->
+	{{#each blockTypes}}
 
-			<transform translation="{{x}} {{y}} {{z}}" scale="1 1 1" rotation="0 1 0 0">
-	    <shape id="{{_id}}">
+		{{#each blocks}}
+			<transform translation="{{x}} {{y}} {{z}}" scale="1 1 1"
+				rotation="0 1 0 {{rotY}}">
+	    <shape id="{{x}}">
 	      <appearance>
 	      	<!-- could be improved to have texture and not just color -->
-					<ImageTexture  url="/textures/{{blockTypeId.texture}}"></ImageTexture>
+					<ImageTexture  url="/textures/{{../texture}}"></ImageTexture>
 					{{#if donated}}
-					<material diffuseColor="{{color}}" ambientIntensity="1"
+					<material diffuseColor="#fff" ambientIntensity="1"
 						shininess="0"></material>
           {{else}}
-        	   <material diffuseColor="{{color}}" ambientIntensity="0.1"
+        	   <material diffuseColor="#fff" ambientIntensity="0.1"
         	        	shininess="0" transparency="0.1"></material>
           {{/if}}
 	      </appearance>
-	      <box size="{{sizeX}} {{sizeY}} {{sizeZ}}"></box>
+	      <box size="{{../sizeX}} {{../sizeY}} {{../sizeZ}}"></box>
 	    </shape>
 	  </transform>
+		{{/each}}
+
   {{/each}}
 
 <!--
@@ -127,12 +134,16 @@
 				{{/each}}
 				{{/if}}
 				{{#if scenePickerTabIs 'size'}}
-				<label class="btn">
-					<input type="range" id="sliderWidth" min="15" max="80" step="5" value="30" /> Width
-				</label>
-				<label class="btn">
-					<input type="range" id="sliderHeight" min="15" max="80" step="5" value="30" /> Height
-				</label>
+				<form class="form-inline">
+						<div class="form-group">
+							<label for="">Width</label>
+							<input type="range" id="sliderWidth" min="15" max="160" step="10" value="{{groundWidth}}" />
+						</div>
+						<div class="form-group">
+							<label for="">Length</label>
+							<input type="range" id="sliderLength" min="15" max="160" step="10" value="{{groundLength}}" />
+						</div>
+				</form>
 				{{/if}}
 			</div>
 		</div>
@@ -142,9 +153,9 @@
 			<div class="">
 				{{> blocktype}}
 			</div>
+			<h2>Rotation</h2>
 			<div class="">
-				<p>Rotation</p>
-				<button class="orientate-block btn btn-primary">Horizontal</button>
+				{{> block}}
 			</div>
 		</div>
 		{{/unless}}
@@ -180,7 +191,7 @@
 			BT:
 			<img class="swatch {{#if activeBlockType}}active{{/if}}" src="/textures/{{texture}}">
 			{{sizeX}} x {{sizeY}} x {{sizeZ}}
-			<button class="remove-blocktype btn btn-sm" data-blocktype="{{_id}}">X</button>
+			<button class="remove-blocktype btn btn-sm">X</button>
 		{{/each}}
 	</div>
 
@@ -193,6 +204,11 @@
 				</div>
 				<form class="new-blocktype">
 				<div class="modal-body">
+					<h2>Unique name</h2>
+					<div class="form-group">
+				    <input type="text" class="form-control" name="name" placeholder="Enter name">
+				  </div>
+
 					<h2>Select Texture</h2>
 					<div class="texture-picker-content">
 						{{#each blockTextures}}
@@ -201,9 +217,9 @@
 					</div>
 
 					<h2>Size</h2>
-					<label class="btn">
-						<input type="number" name="length" min="1" max="5" step="1" value="1" /> Length
-					</label>
+					<label class="btn">Length</label>
+					<input type="number" name="length" min="1" max="5" step="1" value="1" />
+
 					<label class="btn">
 						<input type="number" name="height" min="1" max="5" step="1" value="1" /> Heigth
 					</label>
@@ -221,4 +237,29 @@
 			</div><!-- /.modal-content -->
 		</div><!-- /.modal-dialog -->
 	</div><!-- /.modal -->
+</template>
+
+<template name="block">
+
+	<div class="block-content">
+<!--
+		<p>Rotation</p>
+		<button class="orientate-block btn btn-primary">Horizontal</button>
+-->
+	<form class="form-inline">
+		<h2>Size</h2>
+			<div class="form-group">
+				<label for="">X-Axis</label>
+				<input type="number" class="form-control" id="xAxis" min="1" max="5" step="1" value="1" >
+			</div>
+			<div class="form-group">
+				<label for="">Y-Axis</label>
+				<input type="number" class="form-control" id="yAxis" min="1" max="5" step="1" value="1" >
+			</div>
+			<div class="form-group">
+				<label for="">Z-Axis</label>
+				<input type="number" class="form-control" id="zAxis" min="1" max="5" step="1" value="1" >
+			</div>
+	</form>
+	</div>
 </template>

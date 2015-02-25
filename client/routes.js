@@ -30,18 +30,21 @@ var RouterClass = Backbone.Router.extend({
     Meteor.subscribe("scenes", sceneId, function () {
       // when the subscribe completes, check if the ID in the session is
       // a real ID; if it's not reset to the home page
-      if (Scenes.findOne(sceneId)) {
+      var scene = Scenes.findOne(sceneId);
+      if (scene) {
         // we did good, set the ID in the session
         if (! Session.get("mode") && ! Utils.currentScene().frozen) {
           // set default mode
           Session.set("mode", "build");
         }
-        Meteor.subscribe("blocks", sceneId, function () {
-          Session.set("sceneId", sceneId);
-        });
-        Meteor.subscribe("blockTypes", sceneId, function () {
-          Session.set("loading", false);
-        });
+        Session.set("sceneId", sceneId);
+
+        console.log("created scene");
+        console.log(scene);
+        Session.set("groundWidth", scene.groundWidth);
+        Session.set("groundLength", scene.groundLength);
+
+        Session.set("loading", false);
       } else {
         self.navigate("");
       }
