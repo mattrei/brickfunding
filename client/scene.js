@@ -27,6 +27,9 @@ Session.setDefault("blockXAxis", 1);
 Session.setDefault("blockYAxis", 1);
 Session.setDefault("blockZAxis", 1);
 
+Session.setDefault("blockRotation",  new x3dom.fields.SFMatrix4f());
+Session.setDefault("blockRotationOffset",  new x3dom.fields.SFMatrix4f());
+
 
 Template.controls.helpers({
   frozen: Utils.frozen,
@@ -77,7 +80,7 @@ Template.controls.helpers({
 Template.blocktype.helpers({
   blockTextures: blockTextures,
   blockTypes: function() {
-    return Utils.currentScene().blockTypes;
+    return BlockTypes.find({"sceneId": Session.get("sceneId")});
   },
   activeBlockType: function () {
     return (Session.get("blockType") || this.valueOf() ||
@@ -206,8 +209,11 @@ Template.block.events({
 });
 
 Template.scene.helpers({
-  blockTypes: function () {
-    return Utils.currentScene().blockTypes;
+  blocks: function () {
+    return Blocks.find({"sceneId": Session.get("sceneId")});
+  },
+  blockType: function() {
+    return BlockTypes.findOne({"_id": this.typeId});
   },
   groundTexture: function () {
     return Utils.currentScene().groundTexture || groundTextures[0];
@@ -220,6 +226,30 @@ Template.scene.helpers({
     } else {
       return "30 30";
     }
+  },
+  blockRotation: function() {
+/*
+    var x = Session.get("blockXAxis");
+    var y = Session.get("blockYAxis");
+    var z = Session.get("blockZAxis");
+    console.log("rot");
+
+
+    var sensorToWorldMatrix = x3dom.fields.SFMatrix4f.parseRotation("1 0 0 -1.57");
+    var q = new x3dom.fields.Quaternion(1, 0, 0, x);
+    var rotationMatrixWorld = sensorToWorldMatrix.mult(q.toMatrix());
+
+			//create an offset that applies the current rotation in world coordinates,
+			//but doesn't change the orientation of the coordinate system
+    var blockRotationOffset = rotationMatrixWorld.mult(sensorToWorldMatrix.inverse());
+    //incorporate the current rotation offset, interpreted globally, into the stored rotation value
+    var transformMatrix = blockRotationOffset; //blockRotationOffset.mult(currentGizmoRotation);
+
+        //set matrix value in column major format, as required by the MatrixTransform node
+    console.log(transformMatrix.transpose().toAxisAngle());
+    console.log(transformMatrix.transpose().toString());
+    return transformMatrix.transpose().toString();
+    */
   },
   /*
   x3dGroundColor: function () {
@@ -264,11 +294,12 @@ Template.scene.helpers({
   }
 });
 
-/*
+
 // method stub for faster performance on the frontend
 Meteor.methods({
-  addBlockToScene: function (sceneId, block) {
+  addBlockToScene: function (sceneId,  blockTypeId, block) {
     block.sceneId = sceneId;
+    block.typeId = blockTypeId;
     Blocks.insert(block);
   },
   addBlockTypeToScene: function (sceneId, blockType) {
@@ -300,26 +331,44 @@ Meteor.methods({
   setSceneBackgroundColor: function (sceneId, texture) {
     Scenes.update({_id: sceneId},
     { $set: { backgroundTexture: texture } });
+  },
+  markBlock: function (sceneId, block) {
+    Blocks.update(
+      {_id: block._id},
+      { $set: { "marked": !block.marked } }
+    );
   }
 });
-*/
+
 
 // how many pixels has the mouse been dragged since last mousedown
 // used to determine if we should place a block or not
 var dragged = 0;
+var move = 0; // move the shape(s)
 
 UI.body.events({
   "mousedown x3d": function () {
     dragged = 0;
   },
-  "mousemove x3d": function () {
+  "mousemove x3d": function (event) {
     dragged += 1;
+
+    if (move === 1) {
+      console.log("moving");
+    }
   },
+  "mouseup x3d": function (event) {
+    move = 0;
+  }
 });
 
 Template.scene.events({
   "mouseup shape": function (event) {
+
     if (!Utils.frozen() && dragged < 5) {
+      if (event.button === 4) {
+        Meteor.call("markBlock",  Session.get("sceneId"), this);
+      }
       if (event.button === 1) {
 
         var blockType = Session.get("blockType");
@@ -334,15 +383,12 @@ Template.scene.events({
         };
         console.log("adding");
         console.log(blockType);
-        console.log(block);
-        Meteor.call("addBlockToScene", Session.get("sceneId"), blockType, block);
-      } else if (event.button === 2) {
+        Meteor.call("addBlockToScene", Session.get("sceneId"), blockType._id, block);
+      } else if (event.button === 2 && this) {
         // right click to remove block
         console.log(this);
         Meteor.call("removeBlockFromScene",
           Session.get("sceneId"), this /*event.currentTarget.id*/);
-      } else if (event.button === 4) {
-        Meteor.call("donateBlock", event.currentTarget.id);
       }
     }
   },
@@ -353,6 +399,13 @@ Template.scene.events({
       Session.set("blockinfo", event.currentTarget.id);
     } else {
       Session.set("blockinfo", 'no');
+    }
+  },
+  "mousedown shape": function (event) {
+
+    if (event.button === 4 && this) {
+      move = 1;
+      console.log(this);
     }
   },
   "viewpointChanged viewpoint": function (event) {
