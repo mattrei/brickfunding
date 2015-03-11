@@ -97,9 +97,7 @@ Meteor.methods({
     check(sceneId, String);
     check(blockTypeId, String);
     check(block, {
-      rotX: Number,
-      rotY: Number,
-      rotZ: Number,
+      rotation: String,
       x: Number,
       y: Number,
       z: Number

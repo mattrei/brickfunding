@@ -26,8 +26,54 @@
 	  </shape>
 	</transform>
 
+
+
+
+		<!--<viewpoint position="13.71854 10.00018 18.01263" orientation="-0.66475 0.73173 0.15059 0.81072"></viewpoint>-->
+
+					<!-- EXAMPLE TEAPOT SHAPE -->
+		<transform id="teapotTranslation" translation="2 2 2">
+			<matrixTransform id="teapotRotation" matrix="1.000000, 0.000000, 0.000000, 0.000000,
+0.000000, 1.000000, 0.000000, 0.000000,
+0.000000, 0.000000, 1.000000, 0.000000,
+0.000000, 0.000000, 0.000000, 1.000000">
+				<transform >
+				<shape>
+									<appearance sortKey="1">
+																									<material   transparency='0.7' diffuseColor="#f0f" ambientIntensity="1"
+																																																																			shininess="0"></material>
+																																																																																	</appearance>
+						<appearance>
+							<Material  transparency='0.7' emissiveColor='0 1 1'>
+							</Material>
+
+							<!-- could be improved to have texture and not just color -->
+							<ImageTexture origChannelCount="1"  url="brick1.jpg"></ImageTexture>
+							<material diffuseColor="#fff" ambientIntensity="1"
+								shininess="0" transparency="0.1"></material>
+						</appearance>
+
+											<box size="3 3 3"></box>
+				</shape>
+				</transform>
+			</matrixTransform>
+		</transform>
+
+
+
+
+
+
+
+
+
+
+
+
 	<!--<background skyColor="{{x3dBackgroundColor}}"></background>-->
-	<background skyColor="0.4 0.4 0.5" backUrl="/textures/skybox/BK.png"
+	<background skyColor="0.4 0.4rotX: Number,
+      rotY: Number,
+      rotZ: Number, 0.5" backUrl="/textures/skybox/BK.png"
 	bottomUrl="/textures/skybox/DN.png" frontUrl="/textures/skybox/FR.png"
 	leftUrl="/textures/skybox/LF.png" rightUrl="/textures/skybox/RT.png"
 	topUrl="/textures/skybox/UP.png"></background>
@@ -36,11 +82,10 @@
 	<!-- blocks -->
 
 		{{#each blocks}}
-			<transform translation="{{x}} {{y}} {{z}}" >
-				<matrixTransform matrix="{{blockRotation}}" >
-					<transform  scale="1 1 1">
-				    <shape id="{{x}}">
-
+			<transform  translation="{{x}} {{y}} {{z}}">
+				<matrixTransform matrix="{{rotation}}" >
+					<transform>
+				    <shape>
 							<appearance sortKey="1">
 								<material   transparency='0.7' diffuseColor="#f0f" ambientIntensity="1"
 									shininess="0"></material>
@@ -228,13 +273,13 @@
 
 					<h2>Size</h2>
 					<label class="btn">Length</label>
-					<input type="number" name="length" min="1" max="5" step="1" value="1" />
+					<input type="number" name="length" min="0" max="100" step="1" value="1" />
 
 					<label class="btn">
-						<input type="number" name="height" min="1" max="5" step="1" value="1" /> Heigth
+						<input type="number" name="height" min="0" max="100" step="1" value="1" /> Heigth
 					</label>
 					<label class="btn">
-						<input type="number" name="width" min="1" max="5" step="1" value="1" /> Width
+						<input type="number" name="width" min="0" max="100" step="1" value="1" /> Width
 					</label>
 
 

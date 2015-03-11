@@ -23,9 +23,9 @@ Meteor.log = function() {
 Session.setDefault("blockTexture", blockTextures[0]);
 Session.setDefault("blockOrientation", false);
 
-Session.setDefault("blockXAxis", 1);
-Session.setDefault("blockYAxis", 1);
-Session.setDefault("blockZAxis", 1);
+Session.setDefault("blockXAxis", 0);
+Session.setDefault("blockYAxis", 0);
+Session.setDefault("blockZAxis", 0);
 
 Session.setDefault("blockRotation",  new x3dom.fields.SFMatrix4f());
 Session.setDefault("blockRotationOffset",  new x3dom.fields.SFMatrix4f());
@@ -215,6 +215,10 @@ Template.scene.helpers({
   blockType: function() {
     return BlockTypes.findOne({"_id": this.typeId});
   },
+  rotationObject: function() {
+    console.log(x3dom.fields.SFMatrix4f.parse(this.rotation));
+    return x3dom.fields.SFMatrix4f.parse(this.rotation);
+  },
   groundTexture: function () {
     return Utils.currentScene().groundTexture || groundTextures[0];
   },
@@ -228,12 +232,12 @@ Template.scene.helpers({
     }
   },
   blockRotation: function() {
-/*
+
     var x = Session.get("blockXAxis");
     var y = Session.get("blockYAxis");
     var z = Session.get("blockZAxis");
-    console.log("rot");
 
+    /*
 
     var sensorToWorldMatrix = x3dom.fields.SFMatrix4f.parseRotation("1 0 0 -1.57");
     var q = new x3dom.fields.Quaternion(1, 0, 0, x);
@@ -371,19 +375,27 @@ Template.scene.events({
       }
       if (event.button === 1) {
 
+        var rotx = new x3dom.fields.Quaternion(1, 0, 0, Session.get("blockXAxis"));
+        var roty = new x3dom.fields.Quaternion(0, 1, 0, Session.get("blockYAxis"));
+        var rotz = new x3dom.fields.Quaternion(0, 0, 1, Session.get("blockZAxis"));
+
+        mx = x3dom.fields.SFMatrix4f.parseRotation(rotx);
+        my = x3dom.fields.SFMatrix4f.parseRotation(roty);
+        mz = x3dom.fields.SFMatrix4f.parseRotation(rotz);
+
+        m = mx.mult(my.mult(mz));
+        console.log(m.transpose().toString());
+
         var blockType = Session.get("blockType");
         var block = {
-          rotX: Session.get("blockXAxis"),
-          rotY: Session.get("blockYAxis"),
-          rotZ: Session.get("blockZAxis"),
+          rotation: m.transpose().toString().replace(/(\r\n|\n|\r)/gm,""),
 
           x: Math.floor(event.worldX + event.normalX / 2) + 0.5 * blockType.sizeX,
           y: Math.floor(event.worldY + event.normalY / 2) + 0.5 * blockType.sizeY,
           z: Math.floor(event.worldZ + event.normalZ / 2) + 0.5 * blockType.sizeZ
         };
-        console.log("adding");
-        console.log(blockType);
         Meteor.call("addBlockToScene", Session.get("sceneId"), blockType._id, block);
+        console.log(block.rotation);
       } else if (event.button === 2 && this) {
         // right click to remove block
         console.log(this);
